@@ -1,0 +1,3 @@
+[submodule "mapstarter"]
+	path = mapstarter
+	url = https://github.com/veltman/mapstarter
