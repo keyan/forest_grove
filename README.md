@@ -1,6 +1,8 @@
 # Forest Grove Oregon, park walking isochrone map
 Notes and scripts to simplify generation of GeoJSON isochrone walking maps around existing parks in Forest Grove Oregon.
 
+![example](https://user-images.githubusercontent.com/6401746/75614613-6962fd00-5aef-11ea-9612-8001b1aefe40.png)
+
 ## Usage
 To produce a merged GeoJSON for the default locations:
 ```

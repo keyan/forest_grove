@@ -12,3 +12,5 @@ if ! type "geojson-merge" > /dev/null; then
 fi
 
 geojson-merge data/*.geojson > output/combined.geojson
+
+python3 map_data.py
