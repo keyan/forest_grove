@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet-src.js" crossorigin=""></script>
+    <!--  Include targomo leaflet full build -->
+    <script src="https://releases.targomo.com/leaflet/latest-full.min.js"></script>
+    <style>
+        body,
+        html {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        #intersection-mode-select {
+            position: absolute;
+            z-index: 400;
+            top: 10px;
+            right: 10px;
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        .legend {
+            position: fixed;
+            top: 10px;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+        }
+
+        .legend .container {
+            width: 75%;
+            max-width: 400px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .legend .container .cell {
+            text-align: center;
+            padding: 5px 0;
+            color: white;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            min-width: 60px;
+    </style>
+</head>
+
+<body>
+    <div class="legend">
+        <div class="container"></div>
+    </div>
+    <!--  where the map will live  -->
+    <div id="map"></div>
+    <!--  selector used to change the intersection mode  -->
+    <select id="intersection-mode-select" onchange="switchmode(this);" hidden=true></select>
+    <script>
+        const select = document.querySelector("#intersection-mode-select");
+
+        // create targomo client
+        const client = new tgm.TargomoClient('northamerica', 'QKNWJUTS9N7H64FW9R4B224483542');
+
+        // Polulate the select menu
+        const intersectionModes = [
+            { text: 'Union', value: 'union' },
+            { text: 'Average', value: 'average' },
+            { text: 'Intersection', value: 'intersection' }
+        ];
+        for (let mode of intersectionModes) {
+            let option = document.createElement("option");
+            option.text = mode.text;
+            option.value = mode.value;
+            select.appendChild(option);
+        }
+
+        // Create a Leaflet map with basemap, set the center of the map to the city center of Utrecht.
+        const tilesUrl = 'https://api.maptiler.com/maps/positron/{z}/{x}/{y}@2x.png?key=NQsYeWExW2hyTjm5iEZS';
+        const tileLayer = L.tileLayer(tilesUrl, {
+            tileSize: 512, zoomOffset: -1,
+            minZoom: 1, crossOrigin: true
+        });
+        var map = L.map('map', {
+            layers: [tileLayer],
+            scrollWheelZoom: false
+        }).setView([45.527719, -123.109495], 14);
+        const attributionText = `<a href='https://targomo.com/developers/resources/attribution/' target='_blank'>&copy; Targomo</a>`
+        map.attributionControl.addAttribution(attributionText);
+
+        // Define source locations which are passed into the Targomo polygon service.
+        const sources = [
+					{ id: 'lincoln_park', lat: 45.527719, lng: -123.109495 },
+					{ id: 'talisman_city_park', lat: 45.528791, lng: -123.126243 },
+					{ id: 'thatcher_city_park', lat: 45.535558, lng: -123.134358 },
+					{ id: 'joseph_gale', lat: 45.516187, lng: -123.093986 },
+					{ id: 'bard_park', lat: 45.522748, lng: -123.095529 },
+					{ id: 'Rogers_park', lat: 45.516644, lng: -123.103958 },
+					{ id: 'Harlemen_park', lat: 45.513251, lng: -123.062675 },
+					{ id: 'Tarrybrooke_park', lat: 45.515927, lng: -123.067173 },
+					{ id: 'stites_city_park', lat: 45.527630, lng: -123.117109 },
+					{ id: 'hazel_sills_park', lat: 45.531580, lng: -123.119122 },
+					{ id: 'roth_family_park', lat: 45.527797, lng: -123.140526 },
+				];
+
+        // Add markers for the sources on the map.
+        sources.forEach(source => {
+            L.marker([source.lat, source.lng]).addTo(map)
+        });
+
+				// KATHERINE - These are in seconds and define the three rings.
+        const travelTimes = [300, 600, 900];
+				// KATHERINE - Change these to modify color.
+				const colors = { 300: '#006837', 600: '#39B54A', 900: '#8CC63F', 1200: '#F7931E', 1500: '#F15A24', 1800: '#C1272D' }
+
+        // Set the traveloptions and options for the polygon service here.
+				// The 'intersectionMode' option will be changed everytime the selection is updated.
+        const options = {
+            travelType: 'walk',
+            travelEdgeWeights: travelTimes,
+            maxEdgeWeight: 900,
+            edgeWeight: 'time',
+            srid: 4326,
+            serializer: 'json',
+            intersectionMode: 'union'
+        };
+
+        // Using the Leaflet extension we can easily visualize the returned polygons on a Leaflet map.
+        const polygonOverlayLayer = new tgm.leaflet.TgmLeafletPolygonOverlay();
+        polygonOverlayLayer.addTo(map);
+
+				// KATHERINE - Line thickness
+        polygonOverlayLayer.setStrokeWidth(5)
+				// KATHERINE - Opacity
+				polygonOverlayLayer.setOpacity(0.5)
+
+        polygonOverlayLayer.setColors(colors);
+
+				// iterate the colors assigned to the polygons to build legend
+				Object.keys(polygonOverlayLayer.options.colors).forEach(time => {
+						if (!travelTimes.includes(parseInt(time))) { return; }
+						const color = polygonOverlayLayer.options.colors[time];
+						const label = `${time / 60} min`;
+						const target = document.querySelector('.container');
+						const cell = document.createElement('div');
+						cell.classList.add('cell');
+						cell.style.backgroundColor = color;
+						cell.innerText = label;
+						target.appendChild(cell);
+				})
+
+
+        // Requesting polygons from the Targomo API.
+        function refreshPolygons() {
+            client.polygons.fetch(sources, options).then((result) => {
+                polygonOverlayLayer.setData(result);
+                // calculate bounding box for polygons
+                const bounds = result.getMaxBounds();
+                // zoom to the polygon bounds
+                map.fitBounds(new L.latLngBounds(bounds.northEast, bounds.southWest));
+            });
+        }
+
+        // Update the polygons each time the selection is updated.
+        function switchmode(v) {
+            options.intersectionMode = v.value;
+            refreshPolygons();
+        }
+
+        // Request polygons once immediately on page load.
+        refreshPolygons();
+    </script>
+</body>

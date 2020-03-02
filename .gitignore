@@ -2,3 +2,4 @@
 *.swo
 .ignore
 data/
+.DS_Store
