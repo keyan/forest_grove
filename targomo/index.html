@@ -95,31 +95,30 @@
 
         // Define source locations which are passed into the Targomo polygon service.
         const sources = [
-					{ id: 'lincoln_park', lat: 45.527719, lng: -123.109495 },
-					{ id: 'talisman_city_park', lat: 45.528791, lng: -123.126243 },
-					{ id: 'thatcher_city_park', lat: 45.535558, lng: -123.134358 },
-					{ id: 'joseph_gale', lat: 45.516187, lng: -123.093986 },
-					{ id: 'bard_park', lat: 45.522748, lng: -123.095529 },
-					{ id: 'Rogers_park', lat: 45.516644, lng: -123.103958 },
-					{ id: 'Harlemen_park', lat: 45.513251, lng: -123.062675 },
-					{ id: 'Tarrybrooke_park', lat: 45.515927, lng: -123.067173 },
-					{ id: 'stites_city_park', lat: 45.527630, lng: -123.117109 },
-					{ id: 'hazel_sills_park', lat: 45.531580, lng: -123.119122 },
-					{ id: 'roth_family_park', lat: 45.527797, lng: -123.140526 },
-				];
+            { id: 'lincoln_park', lat: 45.527719, lng: -123.109495 },
+            { id: 'talisman_city_park', lat: 45.528791, lng: -123.126243 },
+            { id: 'thatcher_city_park', lat: 45.535558, lng: -123.134358 },
+            { id: 'joseph_gale', lat: 45.516187, lng: -123.093986 },
+            { id: 'bard_park', lat: 45.522748, lng: -123.095529 },
+            { id: 'Rogers_park', lat: 45.516644, lng: -123.103958 },
+            { id: 'Harlemen_park', lat: 45.513251, lng: -123.062675 },
+            { id: 'Tarrybrooke_park', lat: 45.515927, lng: -123.067173 },
+            { id: 'stites_city_park', lat: 45.527630, lng: -123.117109 },
+            { id: 'hazel_sills_park', lat: 45.531580, lng: -123.119122 },
+            { id: 'roth_family_park', lat: 45.527797, lng: -123.140526 },
+        ];
 
         // Add markers for the sources on the map.
         sources.forEach(source => {
             L.marker([source.lat, source.lng]).addTo(map)
         });
 
-				// KATHERINE - These are in seconds and define the three rings.
+        // KATHERINE - These are in seconds and define the three rings.
         const travelTimes = [300, 600, 900];
-				// KATHERINE - Change these to modify color.
-				const colors = { 300: '#006837', 600: '#39B54A', 900: '#8CC63F', 1200: '#F7931E', 1500: '#F15A24', 1800: '#C1272D' }
-
+        // KATHERINE - Change these to modify color.
+        const colors = { 300: '#006837', 600: '#39B54A', 900: '#8CC63F', 1200: '#F7931E', 1500: '#F15A24', 1800: '#C1272D' }
         // Set the traveloptions and options for the polygon service here.
-				// The 'intersectionMode' option will be changed everytime the selection is updated.
+        // The 'intersectionMode' option will be changed everytime the selection is updated.
         const options = {
             travelType: 'walk',
             travelEdgeWeights: travelTimes,
@@ -131,29 +130,51 @@
         };
 
         // Using the Leaflet extension we can easily visualize the returned polygons on a Leaflet map.
+        // First add the site polygon
+        var siteData;
+        fetch('https://gist.githubusercontent.com/keyan/4fe1bb7e78e8384bd907e2bcfdae2c33/raw/1003016fb563934426426d9c50c6579797b1b8bd/test.geojson')
+            .then((response) => {
+                return response.json();
+            })
+            .then((data) => {
+                L.geoJSON(data, {
+                    style: {
+                        // KATHERINE - thickness of the border outline
+                        weight: 2,
+                        // KATHERINE - change to modify fill color of site boundary
+                        fillColor: '#ff7800',
+                        fillOpacity: 0.1,
+                        // KATHERINE - outline color of site boundary
+                        color: '#ff7800',
+                        opacity: 1,
+                        // KATHERINE - The higher the number, the bigger the space between dashes in the outline
+                        dashArray: '10',
+                    },
+                }).addTo(map);
+            });
+
         const polygonOverlayLayer = new tgm.leaflet.TgmLeafletPolygonOverlay();
         polygonOverlayLayer.addTo(map);
 
-				// KATHERINE - Line thickness
+        // KATHERINE - Line thickness
         polygonOverlayLayer.setStrokeWidth(5)
-				// KATHERINE - Opacity
-				polygonOverlayLayer.setOpacity(0.5)
+        // KATHERINE - Opacity
+        polygonOverlayLayer.setOpacity(0.5)
 
         polygonOverlayLayer.setColors(colors);
 
-				// iterate the colors assigned to the polygons to build legend
-				Object.keys(polygonOverlayLayer.options.colors).forEach(time => {
-						if (!travelTimes.includes(parseInt(time))) { return; }
-						const color = polygonOverlayLayer.options.colors[time];
-						const label = `${time / 60} min`;
-						const target = document.querySelector('.container');
-						const cell = document.createElement('div');
-						cell.classList.add('cell');
-						cell.style.backgroundColor = color;
-						cell.innerText = label;
-						target.appendChild(cell);
-				})
-
+        // iterate the colors assigned to the polygons to build legend
+        Object.keys(polygonOverlayLayer.options.colors).forEach(time => {
+                if (!travelTimes.includes(parseInt(time))) { return; }
+                const color = polygonOverlayLayer.options.colors[time];
+                const label = `${time / 60} min`;
+                const target = document.querySelector('.container');
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.style.backgroundColor = color;
+                cell.innerText = label;
+                target.appendChild(cell);
+        })
 
         // Requesting polygons from the Targomo API.
         function refreshPolygons() {
