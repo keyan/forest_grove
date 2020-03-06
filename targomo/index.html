@@ -128,11 +128,10 @@
             serializer: 'json',
             intersectionMode: 'union'
         };
-
         // Using the Leaflet extension we can easily visualize the returned polygons on a Leaflet map.
-        // First add the site polygon
-        var siteData;
-        fetch('https://gist.githubusercontent.com/keyan/4fe1bb7e78e8384bd907e2bcfdae2c33/raw/1003016fb563934426426d9c50c6579797b1b8bd/test.geojson')
+        // The site polygon
+        // KATHERINE - CHANGE LINKS HERE
+        fetch('https://gist.githubusercontent.com/keyan/e42b992e934161220634dd5837a5b7cf/raw/a384ff74fc78b08f021d9e3cf3724e7b077307eb/site_residential_boundaries.geojson')
             .then((response) => {
                 return response.json();
             })
@@ -146,6 +145,29 @@
                         fillOpacity: 0.1,
                         // KATHERINE - outline color of site boundary
                         color: '#ff7800',
+                        opacity: 1,
+                        // KATHERINE - The higher the number, the bigger the space between dashes in the outline
+                        dashArray: '10',
+                    },
+                }).addTo(map);
+            });
+
+        // The residential boundaries
+        // KATHERINE - CHANGE LINKS HERE
+        fetch('https://gist.githubusercontent.com/khg29/2bf65c4e022a68c3e0c3855486b9c8fe/raw/ad1c661d45ec5c5361710f4380f067a91b2a799c/residential_only')
+            .then((response) => {
+                return response.json();
+            })
+            .then((data) => {
+                L.geoJSON(data, {
+                    style: {
+                        // KATHERINE - thickness of the border outline
+                        weight: 2,
+                        // KATHERINE - change to modify fill color
+                        fillColor: '#000000',
+                        fillOpacity: 0.1,
+                        // KATHERINE - outline color
+                        color: '#000000',
                         opacity: 1,
                         // KATHERINE - The higher the number, the bigger the space between dashes in the outline
                         dashArray: '10',
